@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import random
 
-BASE_PATH = "/home/xiayan/benchmark_datasets/"
+BASE_PATH = "../benchmark_datasets/"
 print(BASE_PATH)
 
 def get_queries_dict(filename):
@@ -94,7 +94,7 @@ def get_query_tuple(dict_value, num_pos, num_neg, QUERY_DICT, hard_neg=[], other
 	neg_files=[]
 	neg_indices=[]
 	if(len(hard_neg)==0):
-		random.shuffle(dict_value["negatives"])	
+		random.shuffle(dict_value["negatives"])
 		for i in range(num_neg):
 			neg_files.append(QUERY_DICT[dict_value["negatives"][i]]["query"])
 			neg_indices.append(dict_value["negatives"][i])
@@ -111,7 +111,7 @@ def get_query_tuple(dict_value, num_pos, num_neg, QUERY_DICT, hard_neg=[], other
 				neg_files.append(QUERY_DICT[dict_value["negatives"][j]]["query"])
 				neg_indices.append(dict_value["negatives"][j])
 			j+=1
-	
+
 	negatives=load_pc_files(neg_files)
 
 	if(other_neg==False):
@@ -129,7 +129,7 @@ def get_query_tuple(dict_value, num_pos, num_neg, QUERY_DICT, hard_neg=[], other
 		random.shuffle(possible_negs)
 
 		if(len(possible_negs)==0):
-			return [query, positives, negatives, np.array([])]		
+			return [query, positives, negatives, np.array([])]
 
 		neg2= load_pc_file(QUERY_DICT[possible_negs[0]]["query"])
 
@@ -166,7 +166,7 @@ def get_rotated_tuple(dict_value, num_pos, num_neg, QUERY_DICT, hard_neg=[],othe
 			if not dict_value["negatives"][j] in hard_neg:
 				neg_files.append(QUERY_DICT[dict_value["negatives"][j]]["query"])
 				neg_indices.append(dict_value["negatives"][j])
-			j+=1	
+			j+=1
 	negatives=load_pc_files(neg_files)
 	n_rot=rotate_point_cloud(negatives)
 
@@ -225,7 +225,7 @@ def get_jittered_tuple(dict_value, num_pos, num_neg, QUERY_DICT, hard_neg=[],oth
 			if not dict_value["negatives"][j] in hard_neg:
 				neg_files.append(QUERY_DICT[dict_value["negatives"][j]]["query"])
 				neg_indices.append(dict_value["negatives"][j])
-			j+=1	
+			j+=1
 	negatives=load_pc_files(neg_files)
 	n_jit=jitter_point_cloud(negatives)
 

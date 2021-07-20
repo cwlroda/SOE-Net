@@ -20,7 +20,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = str(0)
 #params
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 1]')
-parser.add_argument('--log_dir', default='/data/xiayan/log/S0E-Net/', help='Log dir [default: log]')
+parser.add_argument('--log_dir', default='./log/', help='Log dir [default: log]')
 parser.add_argument('--positives_per_query', type=int, default=2, help='Number of potential positives in each training tuple [default: 2]')
 parser.add_argument('--negatives_per_query', type=int, default=8, help='Number of definite negatives in each training tuple [default: 18]')
 parser.add_argument('--max_epoch', type=int, default=20, help='Epoch to run [default: 20]')
@@ -47,8 +47,8 @@ DECAY_STEP = FLAGS.decay_step
 DECAY_RATE = FLAGS.decay_rate
 MARGIN = FLAGS.margin
 
-TRAIN_FILE = '/home/xiayan/generating_queries/training_queries_baseline.pickle'
-TEST_FILE = '/home/xiayan/generating_queries/test_queries_baseline.pickle'
+TRAIN_FILE = './generating_queries/training_queries_baseline.pickle'
+TEST_FILE = './generating_queries/test_queries_baseline.pickle'
 
 LOG_DIR = FLAGS.log_dir
 if not os.path.exists(LOG_DIR): os.mkdir(LOG_DIR)
@@ -92,7 +92,7 @@ def log_string(out_str):
 def get_learning_rate(epoch):
     learning_rate = BASE_LEARNING_RATE*((0.9)**(epoch//5))
     learning_rate = tf.maximum(learning_rate, 0.00001) # CLIP THE LEARNING RATE!
-    return learning_rate        
+    return learning_rate
 
 def train():
     global HARD_NEGATIVES
@@ -106,7 +106,7 @@ def train():
 
             is_training_pl = tf.placeholder(tf.bool, shape=())
             print(is_training_pl)
-            
+
             batch = tf.Variable(0)
             epoch_num = tf.placeholder(tf.float32, shape=())
             bn_decay = get_bn_decay(batch)
@@ -114,7 +114,7 @@ def train():
 
             with tf.variable_scope("query_triplets") as scope:
                 vecs= tf.concat([query, positives, negatives, other_negatives],1)
-                print(vecs)                
+                print(vecs)
                 out_vecs = forward(vecs, is_training_pl, bn_decay=bn_decay)
                 print(out_vecs)
                 q_vec, pos_vecs, neg_vecs, other_neg_vec= tf.split(out_vecs, [1,POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY,1],1)
@@ -136,10 +136,10 @@ def train():
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
                 train_op = optimizer.minimize(loss, global_step=batch)
-            
+
             # Add ops to save and restore all the variables.
             saver = tf.train.Saver(max_to_keep=50)
-            
+
             # Create a session
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
             config = tf.ConfigProto(gpu_options=gpu_options)
@@ -220,7 +220,7 @@ def train_one_epoch(sess, ops, train_writer, test_writer, epoch, saver):
                 faulty_tuple=True
                 break
             #print('len TRAINING_LATENT_VECTORS', len(TRAINING_LATENT_VECTORS))
-            #no cached feature vectors               
+            #no cached feature vectors
             if(len(TRAINING_LATENT_VECTORS)==0):
                 #q_tuples.append(get_query_tuple(TRAINING_QUERIES[batch_keys[j]],POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY, TRAINING_QUERIES, hard_neg=[], other_neg=True))
                 q_tuples.append(get_rotated_tuple(TRAINING_QUERIES[batch_keys[j]],POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY, TRAINING_QUERIES, hard_neg=[], other_neg=True))
@@ -245,7 +245,7 @@ def train_one_epoch(sess, ops, train_writer, test_writer, epoch, saver):
                 #q_tuples.append(get_query_tuple(TRAINING_QUERIES[batch_keys[j]],POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY, TRAINING_QUERIES, hard_negs, other_neg=True))
                 q_tuples.append(get_rotated_tuple(TRAINING_QUERIES[batch_keys[j]],POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY, TRAINING_QUERIES, hard_negs, other_neg=True))
                 # q_tuples.append(get_jittered_tuple(TRAINING_QUERIES[batch_keys[j]],POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY, TRAINING_QUERIES, hard_negs, other_neg=True))
-            
+
             if(q_tuples[j][3].shape[0]!=NUM_POINTS):
                 no_other_neg= True
                 break
@@ -259,7 +259,7 @@ def train_one_epoch(sess, ops, train_writer, test_writer, epoch, saver):
         if(no_other_neg):
             log_string('----' + str(i) + '-----')
             log_string('----' + 'NO OTHER NEG' + '-----')
-            continue            
+            continue
 
         queries=[]
         positives=[]
@@ -284,7 +284,7 @@ def train_one_epoch(sess, ops, train_writer, test_writer, epoch, saver):
         if(len(queries.shape)!=4):
             log_string('----' + 'FAULTY QUERY' + '-----')
             continue
-        
+
         feed_dict={ops['query']:queries, ops['positives']:positives, ops['negatives']:negatives, ops['other_negatives']:other_neg, ops['is_training_pl']:is_training, ops['epoch_num']:epoch}
         summary, step, train, loss_val = sess.run([ops['merged'], ops['step'],
                 ops['train_op'], ops['loss']], feed_dict=feed_dict)
@@ -308,7 +308,7 @@ def train_one_epoch(sess, ops, train_writer, test_writer, epoch, saver):
                     if(len(TEST_QUERIES[eval_keys[e_tup]]["positives"])<POSITIVES_PER_QUERY):
                         faulty_eval_tuple=True
                         break
-                    eval_tuples.append(get_query_tuple(TEST_QUERIES[eval_keys[e_tup]],POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY, TEST_QUERIES, hard_neg=[], other_neg=True)) 
+                    eval_tuples.append(get_query_tuple(TEST_QUERIES[eval_keys[e_tup]],POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY, TEST_QUERIES, hard_neg=[], other_neg=True))
 
                     if(eval_tuples[e_tup][3].shape[0]!=NUM_POINTS):
                         no_other_neg= True
@@ -321,7 +321,7 @@ def train_one_epoch(sess, ops, train_writer, test_writer, epoch, saver):
                 if(no_other_neg):
                     log_string('----' + str(i) + '-----')
                     log_string('----' + 'NO OTHER NEG EVAL' + '-----')
-                    continue  
+                    continue
 
                 eval_batches_counted+=1
                 eval_queries=[]
@@ -336,7 +336,7 @@ def train_one_epoch(sess, ops, train_writer, test_writer, epoch, saver):
                     eval_other_neg.append(eval_tuples[tup][3])
 
                 eval_queries= np.array(eval_queries)
-                eval_queries= np.expand_dims(eval_queries,axis=1)                
+                eval_queries= np.expand_dims(eval_queries,axis=1)
                 eval_other_neg= np.array(eval_other_neg)
                 eval_other_neg= np.expand_dims(eval_other_neg,axis=1)
                 eval_positives= np.array(eval_positives)
@@ -386,7 +386,7 @@ def get_random_hard_negatives(query_vec, random_negs, num_to_take):
     latent_vecs=[]
     for j in range(len(random_negs)):
         latent_vecs.append(TRAINING_LATENT_VECTORS[random_negs[j]])
-    
+
     latent_vecs=np.array(latent_vecs)
     nbrs = KDTree(latent_vecs)
     distances, indices = nbrs.query(np.array([query_vec]),k=num_to_take)
@@ -418,17 +418,17 @@ def get_latent_vectors(sess, ops, dict_to_process):
         q4=np.expand_dims(q4,axis=1)
         feed_dict={ops['query']:q1, ops['positives']:q2, ops['negatives']:q3,ops['other_negatives']:q4, ops['is_training_pl']:is_training}
         o1, o2, o3, o4=sess.run([ops['q_vec'], ops['pos_vecs'], ops['neg_vecs'], ops['other_neg_vec']], feed_dict=feed_dict)
-        
+
         o1=np.reshape(o1,(-1,o1.shape[-1]))
         o2=np.reshape(o2,(-1,o2.shape[-1]))
         o3=np.reshape(o3,(-1,o3.shape[-1]))
-        o4=np.reshape(o4,(-1,o4.shape[-1]))        
+        o4=np.reshape(o4,(-1,o4.shape[-1]))
 
         out=np.vstack((o1,o2,o3,o4))
         q_output.append(out)
 
     q_output=np.array(q_output)
-    if(len(q_output)!=0):  
+    if(len(q_output)!=0):
         q_output=q_output.reshape(-1,q_output.shape[-1])
     print('q_output', q_output)
     #handle edge case

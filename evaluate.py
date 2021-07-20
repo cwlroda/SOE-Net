@@ -48,8 +48,8 @@ if not os.path.exists(RESULTS_FOLDER): os.mkdir(RESULTS_FOLDER)
 
 NUMBER_NEIBORS = 25
 
-DATABASE_FILE= '/home/xiayan/generating_queries/'+ dataset +'_evaluation_database.pickle'
-QUERY_FILE= '/home/xiayan/generating_queries/' + dataset + '_evaluation_query.pickle'
+DATABASE_FILE= './generating_queries/'+ dataset +'_evaluation_database.pickle'
+QUERY_FILE= './generating_queries/' + dataset + '_evaluation_query.pickle'
 
 
 output_file= RESULTS_FOLDER +'baseline_results_'+dataset+'_'+model_file+'.txt'
@@ -80,7 +80,7 @@ def get_bn_decay(batch):
                       BN_DECAY_DECAY_RATE,
                       staircase=True)
     bn_decay = tf.minimum(BN_DECAY_CLIP, 1 - bn_momentum)
-    return bn_decay     
+    return bn_decay
 
 def evaluate():
     global DATABASE_VECTORS
@@ -103,7 +103,7 @@ def evaluate():
 
             with tf.variable_scope("query_triplets") as scope:
                 vecs= tf.concat([query, positives, negatives],1)
-                print(vecs)                
+                print(vecs)
                 out_vecs = forward(vecs, is_training_pl, bn_decay=bn_decay)
                 print(out_vecs)
                 q_vec, pos_vecs, neg_vecs= tf.split(out_vecs, [1,POSITIVES_PER_QUERY,NEGATIVES_PER_QUERY],1)
@@ -112,7 +112,7 @@ def evaluate():
                 print(neg_vecs)
 
             saver = tf.train.Saver()
-            
+
         # Create a session
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
         config = tf.ConfigProto(gpu_options=gpu_options)
@@ -222,7 +222,7 @@ def get_latent_vectors(sess, ops, dict_to_process):
         q_output.append(out)
 
     q_output=np.array(q_output)
-    if(len(q_output)!=0):  
+    if(len(q_output)!=0):
         q_output=q_output.reshape(-1,q_output.shape[-1])
     #print(q_output.shape)
 
@@ -306,7 +306,7 @@ def get_recall(sess, ops, m, n):
     print(recall)
     print(np.mean(top1_similarity_score))
     print('one_percent_recall',one_percent_recall)
-    return recall, top1_similarity_score, one_percent_recall 
+    return recall, top1_similarity_score, one_percent_recall
 
 def get_similarity(sess, ops, m, n):
     global DATABASE_VECTORS
@@ -327,7 +327,7 @@ def get_similarity(sess, ops, m, n):
             similarity.append(q_sim)
     average_similarity=np.mean(similarity)
     print(average_similarity)
-    return average_similarity 
+    return average_similarity
 
 
 if __name__ == "__main__":

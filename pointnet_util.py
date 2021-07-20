@@ -12,10 +12,10 @@ sys.path.append(os.path.join(ROOT_DIR, 'tf_ops/sampling'))
 sys.path.append(os.path.join(ROOT_DIR, 'tf_ops/grouping'))
 sys.path.append(os.path.join(ROOT_DIR, 'tf_ops/3d_interpolation'))
 sys.path.append(os.path.join(ROOT_DIR, 'tf_ops/pointSIFT_op'))
-from pointSIFT_op import pointSIFT_select, pointSIFT_select_four
-from tf_sampling import farthest_point_sample, gather_point
-from tf_grouping import query_ball_point, group_point, knn_point
-from tf_interpolate import three_nn, three_interpolate
+from tf_ops.pointSIFT_op.pointSIFT_op import pointSIFT_select, pointSIFT_select_four
+from tf_ops.sampling.tf_sampling import farthest_point_sample, gather_point
+from tf_ops.grouping.tf_grouping import query_ball_point, group_point, knn_point
+from tf_ops.interpolation.tf_interpolate import three_nn, three_interpolate
 import tensorflow as tf
 import numpy as np
 import tf_util
@@ -243,7 +243,7 @@ def pointnet_sa_module(xyz, points, npoint, radius, nsample, mlp, mlp2, group_al
                                         padding='VALID', stride=[1,1],
                                         bn=bn, is_training=is_training,
                                         scope='conv%d'%(i), bn_decay=bn_decay,
-                                        data_format=data_format) 
+                                        data_format=data_format)
         if use_nchw: new_points = tf.transpose(new_points, [0,2,3,1])
 
         # Pooling in Local Regions
@@ -263,7 +263,7 @@ def pointnet_sa_module(xyz, points, npoint, radius, nsample, mlp, mlp2, group_al
             avg_points = tf.reduce_mean(new_points, axis=[2], keep_dims=True, name='avgpool')
             new_points = tf.concat([avg_points, max_points], axis=-1)
 
-        # [Optional] Further Processing 
+        # [Optional] Further Processing
         if mlp2 is not None:
             if use_nchw: new_points = tf.transpose(new_points, [0,3,1,2])
             for i, num_out_channel in enumerate(mlp2):
@@ -319,15 +319,15 @@ def pointnet_sa_module_msg(xyz, points, npoint, radius_list, nsample_list, mlp_l
         new_points_concat = tf.concat(new_points_list, axis=-1)
         return new_xyz, new_points_concat
 
- 
+
 def pointnet_fp_module(xyz1, xyz2, points1, points2, mlp, is_training, bn_decay, scope, bn=True):
     ''' PointNet Feature Propogation (FP) Module
-        Input:                                                                                                      
-            xyz1: (batch_size, ndataset1, 3) TF tensor                                                              
-            xyz2: (batch_size, ndataset2, 3) TF tensor, sparser than xyz1                                           
-            points1: (batch_size, ndataset1, nchannel1) TF tensor                                                   
+        Input:
+            xyz1: (batch_size, ndataset1, 3) TF tensor
+            xyz2: (batch_size, ndataset2, 3) TF tensor, sparser than xyz1
+            points1: (batch_size, ndataset1, nchannel1) TF tensor
             points2: (batch_size, ndataset2, nchannel2) TF tensor
-            mlp: list of int32 -- output size for MLP on each point                                                 
+            mlp: list of int32 -- output size for MLP on each point
         Return:
             new_points: (batch_size, ndataset1, mlp[-1]) TF tensor
     '''
